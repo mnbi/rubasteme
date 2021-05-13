@@ -1,0 +1,16 @@
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"if"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:op_proc, :literal=>"<"}
+{:type=>:identifier, :literal=>"n"}
+{:type=>:number, :literal=>"0"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"write"}
+{:type=>:string, :literal=>"\"negative\""}
+{:type=>:rparen, :literal=>")"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"write"}
+{:type=>:string, :literal=>"\"positive\""}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}

@@ -10,3 +10,11 @@ Rake::TestTask.new(:test) do |t|
 end
 
 task default: :test
+
+require "rdoc/task"
+
+RDoc::Task.new do |rdoc|
+  rdoc.generator = "ri"
+  rdoc.rdoc_dir = "rdoc"
+  rdoc.rdoc_files.include("lib/**/*.rb")
+end

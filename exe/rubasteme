@@ -1,3 +1,88 @@
 #!/usr/bin/env ruby
 
+require "pp"
 require "rubasteme"
+
+def version
+  "Rubasteme version: #{Rubasteme::VERSION} (#{Rubasteme::RELEASE})"
+end
+
+def usage
+  puts <<HELP
+usage:
+    rubasteme [option] [FILE]
+
+Reads the given files as a sequence of tokens, then print AST nodes.
+If no FILE is specified, then tries to read from the standard input.
+
+option:
+    -o, --output-file OUTPUT_FILE : specify the output file
+    -t, --format-type TYPE : specify the output format
+    -d, --debug   : specify to run verbosely
+    -v, --version : print version
+    -h, --help    : show this message
+
+input format:
+    Specify one of the following names:
+        ast, array
+HELP
+end
+
+def opt_parse(args, opts = {})
+  files = []
+  while args.size > 0
+    arg = args.shift
+    case arg
+    when "-o", "--output-file"
+      opts[:output_file] = args.shift
+    when "-t", "--format-type"
+      format_type = args.shift
+      raise ArgumentError, "not specified as format type" if format_type.nil?
+      opts[:format_type] = format_type.intern
+    when "-d", "--debug"
+      opts[:verbose] = true
+    when "-v", "--version"
+      puts version
+      exit 0
+    when "-h", "--help"
+      puts usage
+      exit 0
+    else                        # must be a filename
+      files << arg if arg
+    end
+  end
+  args.concat(files)
+  opts
+end
+
+opts = opt_parse(ARGV)
+if opts[:verbose]
+  puts version
+  format = opts[:format_type] || "default (token)"
+  puts "Input format: #{format}"
+  ofname = opts[:output_file] || "STDOUT"
+  puts "Output file: #{ofname}"
+end
+
+lines = []
+if ARGV.size > 0
+  lines = ARGF.entries.map{|s| s.delete_suffix("\n")}
+else
+  lines = STDIN.readlines(chomp: true)
+end
+
+tokens = lines.map{|e| Kernel.eval(e)}
+lexer = Rubasteme.lexer(tokens)
+parser = Rubasteme.parser(lexer)
+ast = parser.parse
+
+output = ""
+PP.pp(ast.to_a, output)
+
+form = opts[:format_type] || :token
+of = STDOUT
+of = File.open(opts[:output_file], "w") if opts[:output_file]
+
+of.puts(output)
+
+of.close

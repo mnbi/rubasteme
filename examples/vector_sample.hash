@@ -1,0 +1,8 @@
+{:type=>:vec_lparen, :literal=>"#("}
+{:type=>:number, :literal=>"1"}
+{:type=>:number, :literal=>"2"}
+{:type=>:vec_lparen, :literal=>"#("}
+{:type=>:number, :literal=>"3"}
+{:type=>:number, :literal=>"4"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}

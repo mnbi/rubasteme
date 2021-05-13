@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 
-require_relative "rubasteme/version"
+require "rbscmlex"
 
 module Rubasteme
-  class Error < StandardError; end
-  # Your code goes here...
+
+  def self.lexer(obj)
+    Rbscmlex::Lexer.new(obj)
+  end
+
+  require_relative "rubasteme/error"
+  require_relative "rubasteme/utils"
+  require_relative "rubasteme/ast"
+  require_relative "rubasteme/parser"
+  require_relative "rubasteme/version"
 end
