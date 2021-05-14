@@ -54,25 +54,30 @@ module Rubasteme
     end
 
     def parse_compound_expression
-      node = nil
-
       case @lexer.peek_token.type
       when :vec_lparen
-        node = parse_vector
+        parse_vector
+      when :quotation
+        parse_quotation
       else
-        node = parse_simple_expression
+        parse_simple_expression
       end
-
-      node
     end
 
     def parse_vector
       parse_data_to_matched_rparen
     end
 
+    def parse_quotation
+      token = @lexer.next_token
+      quote_node = AST.instantiate(:ast_quotation, token.literal)
+      quote_node << parse_datum
+      quote_node
+    end
+
     def parse_data_to_matched_rparen
       token = @lexer.next_token
-      node = AST.instantiate(ast_compound_type(token.type), token.literal)
+      node = AST.instantiate(ast_compound_type(token.type), nil)
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen
         node << parse_datum
@@ -96,11 +101,17 @@ module Rubasteme
 
     def parse_compound_datum
       case @lexer.peek_token.type
+      when :lparen
+        parse_list
       when :vec_lparen
         parse_vector
       else
         parse_simple_expression
       end
+    end
+
+    def parse_list
+      parse_data_to_matched_rparen
     end
 
     private

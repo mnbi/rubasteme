@@ -1,0 +1,17 @@
+{:type=>:quotation, :literal=>"'"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"lambda"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"x"}
+{:type=>:identifier, :literal=>"y"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:op_proc, :literal=>"*"}
+{:type=>:identifier, :literal=>"x"}
+{:type=>:identifier, :literal=>"y"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:number, :literal=>"123"}
+{:type=>:number, :literal=>"456"}
+{:type=>:rparen, :literal=>")"}

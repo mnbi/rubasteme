@@ -5,9 +5,9 @@ module Rubasteme
   module AST
 
     class BranchNode < Node
-      def initialize(_ = nil)
-        super
-        @nodes = []
+      def initialize(initial_size = nil)
+        super(nil)
+        @nodes = initial_size.nil? ? [] : Array.new(initial_size)
       end
 
       def size
@@ -15,11 +15,11 @@ module Rubasteme
       end
 
       def to_a
-        @nodes.map(&:to_a)
+        [type, @nodes.map(&:to_a)]
       end
 
       def to_s
-        "[" + @nodes.map(&:to_s).join(", ") + "]"
+        to_a.to_s
       end
 
       include Enumerable
@@ -48,31 +48,26 @@ module Rubasteme
 
     class ProgramNode < BranchNode
       def initialize(_ = nil)
-        super
-      end
-
-      def to_a
-        [type, super]
-      end
-
-      def to_s
-        to_a.to_s
+        super(nil)
       end
     end
 
     class VectorNode < BranchNode
       def initialize(_ = nil)
-        super
-      end
-
-      def to_a
-        [type, super]
+        super(nil)
       end
     end
 
     class ListNode < BranchNode
+      def initialize(first_literal = nil, initial_size = nil)
+        super(initial_size)
+        @nodes[0] = AST.instantiate(:ast_identifier, first_literal) if first_literal
+      end
+    end
+
+    class QuotationNode < ListNode
       def initialize(_ = nil)
-        super
+        super("quote")
       end
     end
 
