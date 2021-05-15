@@ -18,6 +18,12 @@ module Rubasteme
       end
     end
 
+    class EmptyListNode < LeafNode
+      def initialize(_ = nil)
+        super("()")
+      end
+    end
+
     class BooleanNode < LeafNode
       def initialize(literal)
         super

@@ -71,6 +71,54 @@ module Rubasteme
       end
     end
 
+    class ProcedureCallNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<operator>, <operand>*]
+        super(nil, 1)
+      end
+
+      def operator
+        @nodes[0]
+      end
+
+      def operator=(node)
+        @nodes[0] = node
+      end
+
+      def operands
+        @nodes[1..-1]
+      end
+
+      def add_operand(node)
+        @nodes << node
+      end
+    end
+
+    class LambdaExpressionNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = ["lambda", <formals>, <body>, ...]
+        super("lambda", 2)
+      end
+
+      def formals
+        @nodes[1]
+      end
+
+      def formals=(list_node)
+        @nodes[1] = list_node
+      end
+
+      def body
+        @nodes[2..-1]
+      end
+
+      def body=(nodes)
+        nodes.each_with_index { |node, i|
+          @nodes[i + 2] = node
+        }
+      end
+    end
+
   end                           # end of AST
 
 end

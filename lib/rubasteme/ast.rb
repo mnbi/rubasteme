@@ -10,6 +10,7 @@ module Rubasteme
 
     AST_NODE_TYPE = [           # :nodoc:
       # leaf
+      :ast_empty_list,
       :ast_boolean,
       :ast_identifier,
       :ast_character,
@@ -19,6 +20,9 @@ module Rubasteme
       # branch
       :ast_program,
       :ast_list,
+      :ast_quotation,
+      :ast_procedure_call,
+      :ast_lambda_expression,
       # misc.
       :ast_illegal,
     ]
