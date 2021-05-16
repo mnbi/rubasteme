@@ -23,6 +23,11 @@ module Rubasteme
       :ast_quotation,
       :ast_procedure_call,
       :ast_lambda_expression,
+      :ast_conditional,
+      :ast_assignment,
+      :ast_identifier_definition,
+      :ast_and,
+      :ast_or,
       # misc.
       :ast_illegal,
     ]

@@ -1,0 +1,10 @@
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"or"}
+{:type=>:boolean, :literal=>"#f"}
+{:type=>:boolean, :literal=>"#false"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"*"}
+{:type=>:number, :literal=>"2"}
+{:type=>:number, :literal=>"3"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}

@@ -15,7 +15,7 @@
 {:type=>:lparen, :literal=>"("}
 {:type=>:identifier, :literal=>"if"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"<"}
+{:type=>:identifier, :literal=>"<"}
 {:type=>:identifier, :literal=>"n"}
 {:type=>:identifier, :literal=>"c"}
 {:type=>:rparen, :literal=>")"}
@@ -24,12 +24,12 @@
 {:type=>:identifier, :literal=>"fact-iter"}
 {:type=>:identifier, :literal=>"n"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"*"}
+{:type=>:identifier, :literal=>"*"}
 {:type=>:identifier, :literal=>"r"}
 {:type=>:identifier, :literal=>"c"}
 {:type=>:rparen, :literal=>")"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"+"}
+{:type=>:identifier, :literal=>"+"}
 {:type=>:identifier, :literal=>"c"}
 {:type=>:number, :literal=>"1"}
 {:type=>:rparen, :literal=>")"}

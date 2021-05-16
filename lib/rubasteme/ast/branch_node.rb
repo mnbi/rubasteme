@@ -119,6 +119,113 @@ module Rubasteme
       end
     end
 
+    class ConditionalNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<if>, <test>, <consequent>] or
+        #          [<if>, <test>, <consequent>, <alternate>]
+        super("if", 3)
+      end
+
+      def test
+        @nodes[1]
+      end
+
+      def test=(node)
+        @nodes[1] = node
+      end
+
+      def consequent
+        @nodes[2]
+      end
+
+      def consequent=(node)
+        @nodes[2] = node
+      end
+
+      def alternate
+        @nodes[3]
+      end
+
+      def alternate=(node)
+        @nodes[3] = node
+      end
+    end
+
+    class AssignmentNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<set!>, <identifier>, <expression>]
+        super("set!", 3)
+      end
+
+      def identifier
+        @nodes[1]
+      end
+
+      def identifier=(node)
+        @nodes[1] = node
+      end
+
+      def expression
+        @nodes[2]
+      end
+
+      def expression=(node)
+        @nodes[2] = node
+      end
+    end
+
+    class IdentifierDefinitionNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<define>, <identifier>, <expression>]
+        #   <expression> might be a lambda expression.
+        super("define", 3)
+      end
+
+      def identifier
+        @nodes[1]
+      end
+
+      def identifier=(node)
+        @nodes[1] = node
+      end
+
+      def expression
+        @nodes[2]
+      end
+
+      def expression=(node)
+        @nodes[2] = node
+      end
+
+      def def_formals
+        lambda? ? expression.formals : nil
+      end
+
+      def body
+        lambda? ? expression.body : nil
+      end
+
+      private
+
+      def lambda?
+        expression.type == :ast_lambda_expression
+      end
+    end
+
+    class AndNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<and>, <test>, ...]
+        super("and", 1)
+      end
+    end
+
+    class OrNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<or>, <test>, ...]
+        super("or", 1)
+      end
+    end
+
   end                           # end of AST
 
 end

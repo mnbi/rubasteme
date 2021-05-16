@@ -1,0 +1,6 @@
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"and"}
+{:type=>:boolean, :literal=>"#t"}
+{:type=>:boolean, :literal=>"#true"}
+{:type=>:boolean, :literal=>"#f"}
+{:type=>:rparen, :literal=>")"}

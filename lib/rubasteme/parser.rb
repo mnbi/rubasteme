@@ -34,8 +34,12 @@ module Rubasteme
     end
 
     def parse_simple_expression
-      token = @lexer.next_token
-      AST.instantiate(ast_simple_type(token.type), token.literal)
+      type, literal = *@lexer.next_token
+      AST.instantiate(ast_simple_type(type), literal)
+    end
+
+    def parse_identifier
+      parse_simple_expression
     end
 
     TOKEN_START_DELIMITERS = [  # :nodoc:
@@ -62,8 +66,7 @@ module Rubasteme
       when :lparen
         parse_list_expression
       else
-        # TODO: raise an error
-        parse_simple_expression
+        raise SchemeSyntaxError, @lexer.peek_token.literal
       end
     end
 
@@ -72,11 +75,22 @@ module Rubasteme
     end
 
     def parse_quotation
-      token = @lexer.next_token
-      quote_node = AST.instantiate(:ast_quotation, token.literal)
+      literal = @lexer.next_token.literal
+      quote_node = AST.instantiate(:ast_quotation, literal)
       quote_node << parse_datum
       quote_node
     end
+
+    DERIVED_IDENTIFIERS = [
+      "cond", "case", "and", "or", "when", "unless",
+      "let", "let*", "letrec", "letrec*",
+      "let-values", "let*-values",
+      "begin", "do",
+      "delay", "delay-force",
+      "parameterize",
+      "guard",
+      "case-lambda",
+    ]
 
     def parse_list_expression
       node = nil
@@ -99,9 +113,10 @@ module Rubasteme
           node = parse_definition
         when "include", "include-ci"
           node = parse_includer
-        else
+        when *DERIVED_IDENTIFIERS
           node = parse_derived_expression
-          node = parse_macro_use if node.nil?
+        else
+          node = parse_macro_use
         end
       end
       node || parse_procedure_call
@@ -111,12 +126,10 @@ module Rubasteme
       proc_call_node = AST.instantiate(:ast_procedure_call, nil)
       proc_call_node.operator = parse_operator
       Kernel.loop {
-        if @lexer.peek_token.type == :rparen
-          @lexer.skip_token
-          break
-        end
+        break if @lexer.peek_token.type == :rparen
         proc_call_node.add_operand(parse_operand)
       }
+      @lexer.skip_token         # skip :rparen
       proc_call_node
     end
 
@@ -129,25 +142,31 @@ module Rubasteme
     end
 
     def parse_lambda_expression
-      lambda_node = AST.instantiate(:ast_lambda_expression, @lexer.next_token.literal)
-      lambda_node.formals = parse_formals
-      lambda_node.body = read_body
+      @lexer.skip_token         # skip :lparen
+      lambda_node = make_lambda_expression_node(parse_formals, read_body)
       @lexer.skip_token         # skip :rparen
       lambda_node
     end
 
+    def make_lambda_expression_node(formals, body)
+      lambda_node = AST.instantiate(:ast_lambda_expression, nil)
+      lambda_node.formals = formals
+      lambda_node.body = body
+      lambda_node
+    end
+
     def parse_formals
-      token = @lexer.next_token
+      type, literal = *@lexer.next_token
       formals = nil
-      if token.type == :lparen
+      if type == :lparen
         formals = AST.instantiate(:ast_list, nil)
         Kernel.loop {
-          token = @lexer.next_token
-          break if token.type == :rparen
-          formals << AST.instantiate(:ast_identifier, token.literal)
+          type, literal = *@lexer.next_token
+          break if type == :rparen
+          formals << AST.instantiate(:ast_identifier, literal)
         }
       else
-        formals = AST.instantiate(:ast_identifier, token.literal)
+        formals = AST.instantiate(:ast_identifier, literal)
       end
       formals
     end
@@ -155,34 +174,149 @@ module Rubasteme
     def read_body
       body = []
       Kernel.loop {
-        break if @lexer.peek_token.type == :rparen
+        break if @lexer.peek_token.type == :rparen # the end of lambda exp.
         body << parse_expression
       }
       body
     end
 
     def parse_conditional
-      nil
+      if_node = AST.instantiate(:ast_conditional, @lexer.next_token.literal)
+      if_node.test = parse_test
+      if_node.consequent = parse_consequent
+      if @lexer.peek_token.type != :rparen
+        if_node.alternate = parse_alternate
+      end
+      @lexer.skip_token         # skip :rparen
+      if_node
+    end
+
+    def parse_test
+      parse_expression
+    end
+
+    def parse_consequent
+      parse_expression
+    end
+
+    def parse_alternate
+      parse_expression
     end
 
     def parse_assignment
-      nil
+      assignment_node = AST.instantiate(:ast_assignment, @lexer.next_token.literal)
+      assignment_node.identifier = parse_identifier
+      assignment_node.expression = parse_expression
+      @lexer.skip_token         # skip :rparen
+      assignment_node
     end
 
     def parse_macro_block
-      nil
+      not_implemented_yet("MACRO block")
     end
 
     def parse_definition
-      nil
+      case @lexer.peek_token.literal
+      when "define"
+        parse_identifier_definition
+      when "define-syntax"
+        parse_define_syntax
+      when "define-values"
+        parse_define_values
+      when "define-record-type"
+        parse_define_record_type
+      when "begin"
+        parse_begin
+      else
+        raise SchemeSyntaxErrorError, @lexer.peek_token.literal
+      end
+    end
+
+    def parse_identifier_definition
+      # type 1: (define foo 3)
+      # type 2: (define bar (lambda (x y) (+ x y)))
+      # type 3: (define (hoge n m) (display n) (display m) (* n m))
+      define_node = AST.instantiate(:ast_identifier_definition, @lexer.next_token.literal)
+
+      case @lexer.peek_token.type
+      when :identifier
+        # type 1 and type 2
+        define_node.identifier = parse_identifier
+        define_node.expression = parse_expression
+        @lexer.skip_token       # skip :rparen
+      when :lparen
+        # type 3:
+        #   make a lambda expression, then handle as type 2
+        @lexer.skip_token       # skip :lparen
+        define_node.identifier = parse_identifier
+        def_formals_node = AST.instantiate(:ast_list, nil)
+        Kernel.loop {
+          break if @lexer.peek_token.type == :rparen
+          def_formals_node << parse_identifier
+        }
+        @lexer.skip_token       # skip :rparen
+        lambda_node = make_lambda_expression_node(def_formals_node, read_body)
+        @lexer.skip_token       # skip :rparen
+        define_node.expression = lambda_node
+      else
+        raise SchemeSyntaxErrorError, @lexer.peek_token.literal
+      end
+
+      define_node
+    end
+
+    def parse_define_syntax
+      not_implemented_yet("DEFINE-SYNTAX")
+    end
+
+    def parse_define_values
+      not_implemented_yet("DEFINE-VALUES")
+    end
+
+    def parse_define_record_type
+      not_implemented_yet("DEFINE-RECORD-TYPE")
+    end
+
+    def parse_begin
+      not_implemented_yet("BEGIN")
     end
 
     def parse_includer
-      nil
+      not_implemented_yet("INCLUDE or INCLUDE-CI")
     end
 
     def parse_derived_expression
-      nil
+      literal = @lexer.next_token.literal
+      name = compose_method_name("parse_", literal).intern
+      if self.respond_to?(name)
+        m = self.method(name)
+        m.call
+      else
+        not_implemented_yet(literal)
+      end
+    end
+
+    def parse_and
+      parse_logical_test("and")
+    end
+
+    def parse_or
+      parse_logical_test("or")
+    end
+
+    def parse_logical_test(literal)
+      ast_type = "ast_#{literal}".intern
+      node = AST.instantiate(ast_type, nil)
+      Kernel.loop {
+        break if @lexer.peek_token.type == :rparen
+        node << parse_test
+      }
+      @lexer.skip_token
+      node
+    end
+
+    def parse_cond
+      not_implemented_yet("COND")
     end
 
     def parse_macro_use
@@ -252,6 +386,20 @@ module Rubasteme
       end
     end
 
-  end
+    SCM_CHAR_TO_RB_MAP = {
+      "*" => "_star",
+      "-" => "_",
+    }
+
+    def compose_method_name(prefix, type_name)
+      converted_name = type_name.gsub(/[*\-]/, SCM_CHAR_TO_RB_MAP)
+      prefix + converted_name
+    end
+
+    def not_implemented_yet(feature)
+      raise NotImplementedYetError, feature
+    end
+
+  end                           # end of Parser class
 
 end

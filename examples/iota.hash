@@ -25,12 +25,12 @@
 {:type=>:rparen, :literal=>")"}
 {:type=>:rparen, :literal=>")"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"-"}
+{:type=>:identifier, :literal=>"-"}
 {:type=>:identifier, :literal=>"count"}
 {:type=>:number, :literal=>"1"}
 {:type=>:rparen, :literal=>")"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"+"}
+{:type=>:identifier, :literal=>"+"}
 {:type=>:identifier, :literal=>"start"}
 {:type=>:identifier, :literal=>"step"}
 {:type=>:rparen, :literal=>")"}

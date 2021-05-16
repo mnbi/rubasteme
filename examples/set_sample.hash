@@ -1,0 +1,13 @@
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"set!"}
+{:type=>:identifier, :literal=>"x"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"+"}
+{:type=>:number, :literal=>"1"}
+{:type=>:lparen, :literal=>"("}
+{:type=>:identifier, :literal=>"*"}
+{:type=>:number, :literal=>"2"}
+{:type=>:number, :literal=>"3"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}
+{:type=>:rparen, :literal=>")"}

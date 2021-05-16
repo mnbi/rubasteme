@@ -10,7 +10,7 @@
 {:type=>:identifier, :literal=>"cond"}
 {:type=>:lparen, :literal=>"("}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"="}
+{:type=>:identifier, :literal=>"="}
 {:type=>:identifier, :literal=>"n"}
 {:type=>:number, :literal=>"0"}
 {:type=>:rparen, :literal=>")"}
@@ -18,7 +18,7 @@
 {:type=>:rparen, :literal=>")"}
 {:type=>:lparen, :literal=>"("}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"="}
+{:type=>:identifier, :literal=>"="}
 {:type=>:identifier, :literal=>"n"}
 {:type=>:number, :literal=>"1"}
 {:type=>:rparen, :literal=>")"}
@@ -29,13 +29,13 @@
 {:type=>:lparen, :literal=>"("}
 {:type=>:identifier, :literal=>"fib-iter"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"-"}
+{:type=>:identifier, :literal=>"-"}
 {:type=>:identifier, :literal=>"n"}
 {:type=>:number, :literal=>"1"}
 {:type=>:rparen, :literal=>")"}
 {:type=>:identifier, :literal=>"f1"}
 {:type=>:lparen, :literal=>"("}
-{:type=>:op_proc, :literal=>"+"}
+{:type=>:identifier, :literal=>"+"}
 {:type=>:identifier, :literal=>"f0"}
 {:type=>:identifier, :literal=>"f1"}
 {:type=>:rparen, :literal=>")"}
