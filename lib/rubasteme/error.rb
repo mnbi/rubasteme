@@ -6,6 +6,8 @@ module Rubasteme
   # :stopdoc:
   EMSG = {
     scheme_sytanx_error: "syntax error: got=%s",
+    unexpected_token_type: "unexpected token type: got=%s, expected=%s",
+    missing_right_parenthesis: "missing right parenthesis",
     unsupported_feature: "unsupported feature: %s",
     not_implemented_yet: "not implemented yet: %s",
   }
@@ -15,6 +17,20 @@ module Rubasteme
   class SchemeSyntaxErrorError < Error
     def initialize(literal)
       super(EMSG[:scheme_syntax_error] % literal)
+    end
+  end
+
+  # Indicates a token is not expected one.
+  class UnexpectedTokenTypeError < Error
+    def initialize(got, expected = nil)
+      super(EMSG[:unexpected_token_type] % [got, expected])
+    end
+  end
+
+  # Indicates a mismatch of parenthesizes.
+  class MissingRightParenthesisError < Error
+    def initialize
+      super(EMSG[:missing_right_parenthesis])
     end
   end
 
