@@ -470,7 +470,58 @@ module Rubasteme
     end
 
     def parse_do
-      not_implemented_yet("DO")
+      do_node = AST.instantiate(:ast_do, nil)
+      do_node.iteration_specs = parse_iteration_specs
+      do_node.test_and_do_result = parse_test_and_do_result
+      Kernel.loop {
+        break if @lexer.peek_token.type == :rparen
+        do_node.add_command(parse_expression)
+      }
+      skip_rparen
+      do_node
+    end
+
+    def parse_iteration_specs
+      node = AST.instantiate(:ast_list, nil)
+      skip_lparen
+      Kernel.loop {
+        break if @lexer.peek_token.type == :rparen
+        node << parse_iteration_spec
+      }
+      skip_rparen
+      node
+    end
+
+    def parse_iteration_spec
+      spec_node = AST.instantiate(:ast_iteration_spec, nil)
+      skip_lparen
+      spec_node.identifier = parse_identifier
+      spec_node.init = parse_init
+      if @lexer.peek_token.type != :rparen
+        spec_node.step = parse_step
+      end
+      skip_rparen
+      spec_node
+    end
+
+    def parse_init
+      parse_expression
+    end
+
+    def parse_step
+      parse_expression
+    end
+
+    def parse_test_and_do_result
+      node = AST.instantiate(:ast_list, nil)
+      skip_lparen
+      node << parse_test
+      Kernel.loop {
+        break if @lexer.peek_token.type == :rparen
+        node << parse_expression
+      }
+      skip_rparen
+      node
     end
 
     def parse_delay

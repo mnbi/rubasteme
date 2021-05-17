@@ -39,6 +39,8 @@ module Rubasteme
       :ast_letrec_star,
       :ast_bind_spec,
       :ast_begin,
+      :ast_do,
+      :ast_iteration_spec,
       # misc.
       :ast_illegal,
     ]

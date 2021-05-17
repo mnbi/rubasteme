@@ -397,6 +397,68 @@ module Rubasteme
       end
     end
 
+    class DoNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<iteration specs>, <test and do result>, <command>, ...]
+        super(2)
+      end
+
+      def iteration_specs
+        @nodes[0]
+      end
+
+      def iteration_specs=(node)
+        @nodes[0] = node
+      end
+
+      def test_and_do_result
+        @nodes[1]
+      end
+
+      def test_and_do_result=(node)
+        @nodes[1] = node
+      end
+
+      def commands
+        @nodes[2..-1]
+      end
+
+      def add_command(node)
+        @nodes << node
+      end
+    end
+
+    class IterationSpecNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<identifier>, <init>, <step>]
+        super(3)
+      end
+
+      def identifier
+        @nodes[0]
+      end
+
+      def identifier=(node)
+        @nodes[0] = node
+      end
+
+      def init
+        @nodes[1]
+      end
+
+      def init=(node)
+        @nodes[1] = node
+      end
+
+      def step
+        @nodes[2]
+      end
+
+      def step=(node)
+        @nodes[2] = node
+      end
+    end
+
   end                           # end of AST
 
 end
