@@ -15,11 +15,7 @@ module Rubasteme
       end
 
       def to_a
-        [type, @nodes.map(&:to_a)]
-      end
-
-      def to_s
-        to_a.to_s
+        [type].concat(@nodes.map(&:to_a))
       end
 
       include Enumerable
@@ -103,8 +99,8 @@ module Rubasteme
         @nodes[0]
       end
 
-      def formals=(list_node)
-        @nodes[0] = list_node
+      def formals=(node)
+        @nodes[0] = node
       end
 
       def body
@@ -115,6 +111,17 @@ module Rubasteme
         nodes.each_with_index { |node, i|
           @nodes[i + 1] = node
         }
+      end
+    end
+
+    class FormalsNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<identifier 1>, <identifier 2>, ... ]
+        super(nil)
+      end
+
+      def add_identifier(node)
+        @nodes << node
       end
     end
 
@@ -296,8 +303,8 @@ module Rubasteme
 
     class LetNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<bind specs>, <body>, ...] or
-        #          [<identifier>, <bind specs>, <body>, ...]
+        # @nodes = [<bindings>, <body>, ...] or
+        #          [<identifier>, <bindings>, <body>, ...]
         super(1)
       end
 
@@ -309,11 +316,11 @@ module Rubasteme
         @nodes.insert(0, node) if node.type == :ast_identifier
       end
 
-      def bind_specs
+      def bindings
         named_let? ? @nodes[1] : @nodes[0]
       end
 
-      def bind_specs=(node)
+      def bindings=(node)
         if named_let?
           @nodes[1] = node
         else
@@ -341,15 +348,15 @@ module Rubasteme
 
     class LetBaseNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<bind specs>, <body>, ...]
+        # @nodes = [<bindings>, <body>, ...]
         super(1)
       end
 
-      def bind_specs
+      def bindings
         @nodes[0]
       end
 
-      def bind_specs=(node)
+      def bindings=(node)
         @nodes[0] = node
       end
 
@@ -371,6 +378,17 @@ module Rubasteme
     end
 
     class LetrecStarNode < LetBaseNode
+    end
+
+    class BindingsNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<bind spec 1>, <bind spec 2> , ...]
+        super(nil)
+      end
+
+      def add_bind_spec(node)
+        @nodes << node
+      end
     end
 
     class BindSpecNode < ListNode
@@ -403,15 +421,15 @@ module Rubasteme
 
     class DoNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<iteration specs>, <test and do result>, <command>, ...]
+        # @nodes = [<iteration bindings>, <test and do result>, <command>, ...]
         super(2)
       end
 
-      def iteration_specs
+      def iteration_bindings
         @nodes[0]
       end
 
-      def iteration_specs=(node)
+      def iteration_bindings=(node)
         @nodes[0] = node
       end
 
@@ -428,6 +446,34 @@ module Rubasteme
       end
 
       def add_command(node)
+        @nodes << node
+      end
+    end
+
+    class IterationBindingsNode < ListNode
+      def initialize(_ = nil)
+        super(nil)
+      end
+
+      def add_iteration_spec(node)
+        @nodes << node
+      end
+    end
+
+    class TestAndDoResultNode < ListNode
+      def initialize(_ = nil)
+        super(1)
+      end
+
+      def test
+        @nodes[0]
+      end
+
+      def test=(node)
+        @nodes[0] = node
+      end
+
+      def add_expression(node)
         @nodes << node
       end
     end

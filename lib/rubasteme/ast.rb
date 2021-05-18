@@ -23,6 +23,7 @@ module Rubasteme
       :ast_quotation,
       :ast_procedure_call,
       :ast_lambda_expression,
+      :ast_formals,
       :ast_conditional,
       :ast_assignment,
       :ast_identifier_definition,
@@ -37,9 +38,12 @@ module Rubasteme
       :ast_let_star,
       :ast_letrec,
       :ast_letrec_star,
+      :ast_bindings,
       :ast_bind_spec,
       :ast_begin,
       :ast_do,
+      :ast_iteration_bindings,
+      :ast_test_and_do_result,
       :ast_iteration_spec,
       # misc.
       :ast_illegal,
@@ -67,7 +71,7 @@ module Rubasteme
       end
 
       def to_a; []; end
-      def to_s; ""; end
+      def to_s; to_a.to_s; end
     end
 
     require_relative "ast/leaf_node"
@@ -78,6 +82,10 @@ module Rubasteme
         super(literal)
         @given_type = type
         @literal = literal
+      end
+
+      def to_a
+        [type, @given_type, @literal]
       end
     end
 

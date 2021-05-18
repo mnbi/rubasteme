@@ -14,10 +14,6 @@ module Rubasteme
       def to_a
         [type, @literal]
       end
-
-      def to_s
-        to_a.to_s
-      end
     end
 
     class EmptyListNode < LeafNode

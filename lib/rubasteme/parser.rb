@@ -195,19 +195,23 @@ module Rubasteme
     end
 
     def parse_formals
-      type, literal = *@lexer.next_token
-      formals = nil
-      if type == :lparen
-        formals = AST.instantiate(:ast_list, nil)
+      formals_node = nil
+      # type 1: <identifier>
+      # type 2: ( <identifier 1> <identifier 2> ... )
+      # type 3: ( <identifier 1> <identifier 2> <dot> <identifier n> )
+      #   => not supported yet
+      if @lexer.peek_token.type == :lparen
+        formals_node = AST.instantiate(:ast_formals, nil)
+        skip_lparen
         Kernel.loop {
-          type, literal = *@lexer.next_token
-          break if type == :rparen
-          formals << AST.instantiate(:ast_identifier, literal)
+          break if @lexer.peek_token.type == :rparen
+          formals_node.add_identifier(parse_identifier)
         }
-      else
-        formals = AST.instantiate(:ast_identifier, literal)
+      else                      # type 1
+        formals_node = parse_identifier
       end
-      formals
+      skip_rparen
+      formals_node
     end
 
     def read_body
@@ -286,10 +290,10 @@ module Rubasteme
         #   make a lambda expression, then handle as type 2
         skip_lparen
         define_node.identifier = parse_identifier
-        def_formals_node = AST.instantiate(:ast_list, nil)
+        def_formals_node = AST.instantiate(:ast_formals, nil)
         Kernel.loop {
           break if @lexer.peek_token.type == :rparen
-          def_formals_node << parse_identifier
+          def_formals_node.add_identifier(parse_identifier)
         }
         skip_rparen
 
@@ -405,21 +409,21 @@ module Rubasteme
       if @lexer.peek_token.type == :identifier
         let_node.identifier = parse_identifier
       end
-      let_node.bind_specs = parse_bind_specs
+      let_node.bindings = parse_bindings
       let_node.body = read_body
       skip_rparen
       let_node
     end
 
-    def parse_bind_specs
-      specs_node = AST.instantiate(:ast_list, nil)
+    def parse_bindings
+      bindings_node = AST.instantiate(:ast_bindings, nil)
       skip_lparen
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen
-        specs_node << parse_bind_spec
+        bindings_node.add_bind_spec(parse_bind_spec)
       }
       skip_rparen
-      specs_node
+      bindings_node
     end
 
     def parse_bind_spec
@@ -446,7 +450,7 @@ module Rubasteme
     def parse_let_base(type)
       ast_type = "ast_#{type}".intern
       node = AST.instantiate(ast_type, nil)
-      node.bind_specs = parse_bind_specs
+      node.bindings = parse_bindings
       node.body = read_body
       skip_rparen
       node
@@ -472,7 +476,7 @@ module Rubasteme
 
     def parse_do
       do_node = AST.instantiate(:ast_do, nil)
-      do_node.iteration_specs = parse_iteration_specs
+      do_node.iteration_bindings = parse_iteration_bindings
       do_node.test_and_do_result = parse_test_and_do_result
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen
@@ -482,12 +486,12 @@ module Rubasteme
       do_node
     end
 
-    def parse_iteration_specs
-      node = AST.instantiate(:ast_list, nil)
+    def parse_iteration_bindings
+      node = AST.instantiate(:ast_iteration_bindings, nil)
       skip_lparen
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen
-        node << parse_iteration_spec
+        node.add_iteration_spec(parse_iteration_spec)
       }
       skip_rparen
       node
@@ -514,12 +518,12 @@ module Rubasteme
     end
 
     def parse_test_and_do_result
-      node = AST.instantiate(:ast_list, nil)
+      node = AST.instantiate(:ast_test_and_do_result, nil)
       skip_lparen
       node << parse_test
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen
-        node << parse_expression
+        node.add_expression(parse_expression)
       }
       skip_rparen
       node
