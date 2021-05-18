@@ -148,6 +148,10 @@ module Rubasteme
       def alternate=(node)
         @nodes[2] = node
       end
+
+      def alternate?
+        !@nodes[2].nil?
+      end
     end
 
     class AssignmentNode < ListNode

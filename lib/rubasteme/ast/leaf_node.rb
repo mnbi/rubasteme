@@ -9,6 +9,8 @@ module Rubasteme
         @literal = literal
       end
 
+      attr_reader :literal
+
       def to_a
         [type, @literal]
       end

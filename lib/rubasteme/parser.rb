@@ -139,6 +139,7 @@ module Rubasteme
       when :rparen
         # an empty list
         node = AST.instantiate(:ast_empty_list, nil)
+        skip_rparen
       when :identifier
         case literal
         when "lambda"

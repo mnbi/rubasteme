@@ -1,0 +1,193 @@
+#!/usr/bin/env ruby
+
+require "rubasteme"
+
+def usage
+  puts <<HELP
+usage:
+    mini_rus3 [option]
+option:
+    -v, --version : print version
+    -h, --help    : show this message
+HELP
+end
+
+opts = {}
+while ARGV.size > 0
+  arg = ARGV.shift
+  case arg
+  when "-v", "--version"
+    puts "mini_rus3 (Rubasteme :version #{Rubasteme::VERSION} :release #{Rubasteme::RELEASE})"
+    exit 0
+  when "-h", "--help"
+    usage
+    exit 0
+  end
+end
+
+class Evaluator
+  def version
+    "(sample-evaluator :version 0.1.0 :release 2021-05-18)"
+  end
+
+  def initialize
+    @env = Kernel.binding
+    {
+      "+"  => "add",
+      "-"  => "subtract",
+      "*"  => "mul",
+      "/"  => "div",
+      "%"  => "mod",
+      "<"  => "lt?",
+      "<=" => "le?",
+      ">"  => "gt?",
+      ">=" => "ge?",
+      "==" => "eqv?",
+    }.each { |op, proc_name|
+      @env.receiver.instance_eval("def #{proc_name}(op1, op2); op1 #{op} op2; end")
+    }
+    @env.receiver.instance_eval {
+      def display(obj)
+        pp obj
+      end
+    }
+  end
+
+  def eval(ast_node)
+    rb_src =
+      case ast_node.type
+      when :ast_program
+        ast_node.map{|node| translate(node)}.join("; ")
+      else
+        translate(ast_node)
+      end
+
+    rb_eval(rb_src)
+  end
+
+  private
+
+  def rb_eval(rb_src)
+    @env.receiver.instance_eval(rb_src)
+  end
+
+  def translate(ast_node)
+    case ast_node.type
+    when :ast_empty_list
+      ast_node.literal
+    when :ast_boolean
+      (ast_node.literal[1] == "f") ? "false" : "true"
+    when :ast_identifier
+      translate_identifier(ast_node)
+    when :ast_string
+      ast_node.literal
+    when :ast_number
+      ast_node.literal
+    when :ast_procedure_call
+      translate_procedure_call(ast_node)
+    when :ast_lambda_expression
+      translate_lambda_expression(ast_node)
+    when :ast_conditional
+      translate_conditional(ast_node)
+    when :ast_identifier_definition
+      translate_identifier_definition(ast_node)
+    else
+      puts "not implemented yet to evaluate AST node type(%s)" % ast_node.type
+    end
+  end
+
+  CHAR_MAP = {
+    "-" => "_",
+    ">" => "to_",
+  }
+
+  OPERATOR_MAP = {
+    "+"  => "add",
+    "-"  => "subtract",
+    "*"  => "mul",
+    "/"  => "div",
+    "%"  => "mod",
+    "=" => "eqv?",
+    "<" => "lt?",
+    ">" => "gt?",
+    "<=" => "le?",
+    ">=" => "ge?",
+  }
+
+  def translate_identifier(ast_node)
+    id = ast_node.literal
+    return OPERATOR_MAP[id] if OPERATOR_MAP.key?(id)
+    id.gsub!(/[\->]/, CHAR_MAP) if /[\->]/ === id
+    id
+  end
+
+  def translate_procedure_call(ast_node)
+    operands = ast_node.operands.map{|e| translate(e)}.join(", ")
+    operator = translate(ast_node.operator)
+    if ast_node.operator.type == :ast_lambda_expression
+      "#{operator}.call(#{operands})"
+    else
+      "#{operator}(#{operands})"
+    end
+  end
+
+  def translate_lambda_expression(ast_node)
+    formals = ast_node.formals.map{|e| translate(e)}.join(",")
+    body = ast_node.body.map{|e| translate(e)}.join("; ")
+    "lambda{|#{formals}|#{body}}"
+  end
+
+  def translate_conditional(ast_node)
+    test = translate(ast_node.test)
+    consequent = translate(ast_node.consequent)
+    alternate = translate(ast_node.alternate) if ast_node.alternate?
+    rb_src = "if #{test}; #{consequent}"
+    rb_src += "; else; #{alternate}" if alternate
+    rb_src += "; end"
+    rb_src
+  end
+
+  def translate_identifier_definition(ast_node)
+    name = translate(ast_node.identifier)
+    if ast_node.expression.type == :ast_lambda_expression
+      node = ast_node.expression
+      formals = node.formals.map{|e| translate(e)}.join(", ")
+      body = node.body.map{|e| translate(e)}.join("; ")
+      "def #{name}(#{formals}); #{body}; end"
+    else
+      value = translate(ast_node.expression)
+      "#{name} = #{value}"
+    end
+  end
+
+end
+
+evaluator = Evaluator.new
+
+require "readline"
+
+prompt = "mini_Rus3> "
+
+msg = loop {
+  source = Readline::readline(prompt, true)
+  break "Bye!" if source.nil?
+
+  case source
+  when /\(load-scm\s+"(.*)"\)/
+    file = Regexp.last_match[1]
+    source = File.readlines(file, chomp: true).join(" ")
+  when /\(version\)/
+    puts "(Rubasteme :version #{Rubasteme::VERSION} :release #{Rubasteme::RELEASE})"
+    puts "(Rbscmlex :version #{Rbscmlex::VERSION} :release #{Rbscmlex::RELEASE})"
+    next
+  end
+
+  lexer = Rbscmlex::Lexer.new(source, form: :token)
+  parser = Rubasteme.parser(lexer)
+  ast_program = parser.parse
+
+  result = evaluator.eval(ast_program)
+
+  pp result
+}
+puts msg unless msg.nil?
