@@ -1,0 +1,445 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rubasteme"
+
+def usage
+  puts <<HELP
+usage:
+    sicp_scheme [option]
+option:
+    -v, --version : print version
+    -h, --help    : show this message
+HELP
+end
+
+# An evaluator which can evaluate the subset of syntax and procedures
+# of Scheme language.  It is derived from SICP Chatpter 4.
+
+class SicpEvaluator
+  class Error < StandardError; end
+
+  def version                   # :nodoc:
+    ver = "0.1.0"
+    rel = "2021-05-19"
+    "(SICP-evaluator :version #{ver} :release #{rel})"
+  end
+
+  def initialize
+    @ver = version
+  end
+
+  TOPLEVEL_ENV = lambda{ binding }.call
+
+  def eval(exp, env)
+    case tag(exp)
+    when :ast_program
+      result = nil
+      cdr(exp).each { |node|
+        result = self.eval(node, env)
+      }
+      result
+    when :ast_empty_list
+      []
+    when :ast_boolean
+      eval_boolean(exp, env)
+    when *EV_SELF_EVALUATING
+      env.eval(exp[1])
+    when *EV_VARIABLE
+      lookup_variable_value(exp[1], env)
+    when *EV_QUOTED
+      text_of_quotation(exp)
+    when *EV_ASSIGNMENT
+      eval_assignment(exp, env)
+    when *EV_DEFINITION
+      eval_definition(exp, env)
+    when *EV_IF
+      eval_if(exp, env)
+    when *EV_LAMBDA
+      make_procedure(lambda_parameters(exp),
+                     lambda_body(exp),
+                     env)
+    when *EV_BEGIN
+      eval_sequence(begin_actions(exp), env)
+    when *EV_COND
+      eval_if(cond_to_if(exp), env)
+    when *EV_APPLICATION
+      apply(self.eval(operator(exp), env),
+            list_of_values(operands(exp), env))
+    else
+      raise Error, "Unknown expression type -- EVAL: got=%s" % tag(exp)
+    end
+  end
+
+  def apply(procedure, arguments)
+    if primitive_procedure?(procedure)
+      apply_primitive_procedure(procedure, arguments)
+    elsif compound_procedure?(procedure)
+      apply_compound_procedure(procedure, arguments)
+    else
+      raise Error, "Unknown procedure type -- APPLY: got=%s" % procedure.to_s
+    end
+  end
+
+  private
+
+  def eval_if(exp, env)
+    if true?(self.eval(if_predicate(exp), env))
+      self.eval(if_consequent(exp), env)
+    else
+      self.eval(if_alternative(exp), env)
+    end
+  end
+
+  def if_predicate(exp)
+    # exp = [:ast_conditional, [:ast_*], [:ast_*],  [:ast_*]]
+    #                          predicate consequent alternative
+    exp[1]
+  end
+
+  def if_consequent(exp)
+    exp[2]
+  end
+
+  def if_alternative(exp)
+    exp[3]
+  end
+
+  def true?(exp)
+    self.eval_boolean(exp, nil)
+  end
+
+  def eval_boolean(exp, _ = nil)
+    case exp[1]
+    when /\A#f(alse)?\Z/
+      false
+    when /\A#t(rue)?\Z/
+      true
+    else
+      raise Error, "Invalid boolean literal -- EVAL: got=%s" % exp[1]
+    end
+  end
+
+  def empty_env
+    Kernel.binding
+  end
+
+  EV_SELF_EVALUATING = [:ast_string, :ast_number,]
+  EV_VARIABLE        = [:ast_identifier]
+  EV_QUOTED          = [:ast_quotation]
+  EV_ASSIGNMENT      = [:ast_assignment]
+  EV_DEFINITION      = [:ast_identifier_definition]
+  EV_IF              = [:ast_conditional]
+  EV_LAMBDA          = [:ast_lambda_expression]
+  EV_BEGIN           = [:ast_begin]
+  EV_COND            = [:ast_cond]
+  EV_APPLICATION     = [:ast_procedure_call]
+
+  def tagged?(exp)
+    exp.instance_of?(Array) and exp.size > 1 and exp[0].instance_of?(Symbol)
+  end
+
+  def tag(exp)
+    exp[0] if tagged?(exp)
+  end
+
+  def package(exp)
+    exp[1..-1] if tagged?(exp)
+  end
+
+  def identifier(exp)
+    if tagged?(exp) and tag(exp) == :ast_identifier
+      exp[1]
+    end
+  end
+
+  def lookup_variable_value(var, env)
+    var = var.intern
+    val = nil
+    begin
+      if env.local_variable_defined?(var)
+        val = env.local_variable_get(var)
+      end
+    rescue NameError => _
+    end
+    if val.nil? and self.respond_to?(var, true)
+      val = self.method(var)
+    end
+    if val.nil?
+      raise Error, "Undefined identifier as variable or procedure -- EVAL: got=%s" % var
+    end
+    val
+  end
+
+  def eval_assignment(exp, env)
+    # exp = [:ast_assignment, [:ast_identifier], [:ast_*]]
+    var = assignment_variable(exp)
+    val = self.eval(assignment_value(exp), env)
+    # @env.receiver.instance_variable_set("@" + var, val)
+    env.local_variable_set(var.intern, val)
+    val
+  end
+
+  def assignment_variable(exp)
+    # exp[1] = [:ast_identifier, <literal>]
+    exp[1][1]
+  end
+
+  def assignment_value(exp)
+    exp[2]
+  end
+
+  def operator(exp)
+    # exp = [:ast_procedure_call, [:ast_*_1], [:ast_*_2], [:ast_*_3], ...]
+    # :ast_*_1 must be :ast_identifier or :ast_lambda_expression
+    exp[1]
+  end
+
+  def operands(exp)
+    # exp = [:ast_procedure_call, [:ast_*_1], [:ast_*_2], [:ast_*_3], ...]
+    exp[2..-1]
+  end
+
+  def list_of_values(exps, env)
+    exps.map{|e| self.eval(e, env)}
+  end
+
+  def primitive_procedure?(procedure)
+    procedure.instance_of?(Method)
+  end
+
+  def compound_procedure?(procedure)
+    tagged?(procedure) and tag(procedure) == :sicp_scheme_procedure
+  end
+
+  def apply_primitive_procedure(procedure, arguments)
+    if procedure.instance_of?(Method)
+      procedure.call(*arguments)
+    end
+  end
+
+  def apply_compound_procedure(procedure, arguments)
+    extended_env = extend_environment(procedure_parameters(procedure),
+                                      arguments,
+                                      procedure_environment(procedure))
+    eval_sequence(procedure_body(procedure), extended_env)
+  end
+
+  def extend_environment(vars, vals, base_env)
+    if vars.size < vals.size
+      raise Error, "Too many arguments supplied: %s, %s" % [vars, vals]
+    elsif vars.size > vals.size
+      raise Error, "Too few arguments supplied: %s, %s" % [vars, vals]
+    end
+    extended_env = base_env.dup
+    vars.zip(vals).each { |var, val|
+      extended_env.local_variable_set(var.intern, val)
+    }
+    extended_env
+  end
+
+  def begin_actions(exp)
+    # exp = [:ast_begin, [:ast_*_1], [:ast_*_2], ... ]
+    exp[1..-1]
+  end
+
+  def eval_sequence(exps, env)
+    if last_exp?(exps)
+      self.eval(first_exp(exps), env)
+    else
+      self.eval(first_exp(exps), env)
+      eval_sequence(rest_exps(exps), env)
+    end
+  end
+
+  def last_exp?(exps)
+    exps.instance_of?(Array) and exps.size == 1
+  end
+
+  def first_exp(exps)
+    exps.instance_of?(Array) and exps[0]
+  end
+
+  def rest_exps(exps)
+    exps.instance_of?(Array) and exps[1..-1]
+  end
+
+  def eval_definition(exp, env)
+    var = definition_variable(exp).intern
+    val = self.eval(definition_value(exp), env)
+    env.local_variable_set(var, val)
+    var
+  end
+
+  def definition_variable(exp)
+    # exp = [:ast_identifier_definition, [:ast_identifier], [:ast_*]]
+    identifier(exp[1])
+  end
+
+  def definition_value(exp)
+    # exp = [:ast_identifier_definition, [:ast_identifier], [:ast_*]]
+    exp[2]
+  end
+
+  def lambda_parameters(exp)
+    # exp = [:ast_lambda_expression, [:ast_formals], [:ast_*_1] ...]
+    formals = exp[1][1..-1]
+    formals.map{|node| identifier(node).intern}
+  end
+
+  def lambda_body(exp)
+    # exp = [:ast_lambda_expression, [:ast_formals], [:ast_*_1] ...]
+    exp[2..-1]
+  end
+
+  def make_procedure(parameters, body, env)
+    # parameters = [:ast_formals, [:ast_identifier_1], [:ast_identifier_2] ...]
+    # body = [[:ast_*_1], [:ast_*_2], ...]
+    [:sicp_scheme_procedure, parameters, body, env]
+  end
+
+  def procedure_parameters(procedure)
+    compound_procedure?(procedure) and procedure[1]
+  end
+
+  def procedure_body(procedure)
+    compound_procedure?(procedure) and procedure[2]
+  end
+
+  def procedure_environment(procedure)
+    compound_procedure?(procedure) and procedure[3]
+  end
+
+  # primitive procedure for SICP Scheme
+
+  def cons(obj1, obj2)
+    [obj1, obj2]
+  end
+
+  def car(lis)
+    lis[0]
+  end
+
+  def cdr(lis)
+    lis[1..-1]
+  end
+
+  def list(*args)
+    args
+  end
+
+  def write(obj)
+    print obj
+  end
+
+  def display(obj)
+    write(obj)
+    print "\n"
+  end
+
+  def a_calc(op, *args)
+    case args.size
+    when 0
+      0
+    when 1
+      args[0]
+    else
+      a_calc(op, args[0].send(op, args[1]), *args[2..-1])
+    end
+  end
+
+  def add(*args)
+    a_calc(:+, *args)
+  end
+
+  def subtract(*args)
+    a_calc(:-, *args)
+  end
+
+  def mul(*args)
+    a_calc(:*, *args)
+  end
+
+  def div(*args)
+    a_calc(:/, *args)
+  end
+
+  def mod(*args)
+    a_calc(:%, *args)
+  end
+
+  def scm_true
+    [:ast_boolean, "#t"]
+  end
+
+  def scm_false
+    [:ast_boolean, "#f"]
+  end
+
+  def c_calc(op, *args)
+    case args.size
+    when 0, 1
+      raise ArgumentError, args.to_s
+    when 2
+      args[0].send(op, args[1]) ? scm_true : scm_false
+    else
+      args[0].send(op, args[1]) and c_calc(op, *args[1..-1]) ? scm_true : scm_false
+    end
+  end
+
+  def lt?(*args)
+    c_calc(:<, *args)
+  end
+
+  def le?(*args)
+    c_calc(:<=, *args)
+  end
+
+  def gt?(*args)
+    c_calc(:>, *args)
+  end
+
+  def ge?(*args)
+    c_calc(:>=, *args)
+  end
+
+  def same_value?(*args)
+    c_calc(:==, *args)
+  end
+
+  def eqv?(obj1, obj2)
+    obj1 == obj2 ? scm_true : scm_false
+  end
+end
+
+evaluator = SicpEvaluator.new
+
+require "readline"
+
+prompt = "SICP Scheme> "
+
+msg = loop {
+  source = Readline::readline(prompt, true)
+  break "Bye!" if source.nil?
+
+  case source
+  when /\(load-scm\s+"(.*)"\)/
+    file = Regexp.last_match[1]
+    source = File.readlines(file, chomp: true).join(" ")
+  when /\(version\)/
+    puts evaluator.version
+    puts "(Rubasteme :version #{Rubasteme::VERSION} :release #{Rubasteme::RELEASE})"
+    puts "(Rbscmlex :version #{Rbscmlex::VERSION} :release #{Rbscmlex::RELEASE})"
+    next
+  end
+
+  lexer = Rbscmlex::Lexer.new(source, form: :token)
+  parser = Rubasteme.parser(lexer)
+  exp = parser.parse.to_a
+
+  result = evaluator.eval(exp, SicpEvaluator::TOPLEVEL_ENV)
+
+  pp result
+}
+
+puts msg unless msg.nil?
