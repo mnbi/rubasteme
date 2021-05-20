@@ -227,7 +227,7 @@ module Rubasteme
         super(nil)
       end
 
-      def cond_clause
+      def cond_clauses
         @nodes[0..-1]
       end
 

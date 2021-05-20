@@ -20,6 +20,7 @@ module Rubasteme
       # branch
       :ast_program,
       :ast_list,
+      :ast_vector,
       :ast_quotation,
       :ast_procedure_call,
       :ast_lambda_expression,

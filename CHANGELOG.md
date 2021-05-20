@@ -1,6 +1,13 @@
 ## [Unreleased]
 - (nothing to record here)
 
+## [0.1.3] - 2021-05-20
+### Fixed
+- Change a method name of AST::CondNode.
+  - `#cond_clause` -> `#cond_clauses`
+- Modify the timing to pass lexer to parser in `exe/rubasteme`.
+- Fix #1: `:ast_vector` is missing in AST::AST_NODE_TYPE.
+
 ## [0.1.2] - 2021-05-20
 ### Added
 - Add a singleton method, `version` to Parser class.

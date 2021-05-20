@@ -73,8 +73,8 @@ end
 
 tokens = lines.map{|e| Kernel.eval(e)}
 lexer = Rubasteme.lexer(tokens)
-parser = Rubasteme.parser(lexer)
-ast = parser.parse
+parser = Rubasteme.parser
+ast = parser.parse(lexer)
 
 output = ""
 PP.pp(ast.to_a, output)
