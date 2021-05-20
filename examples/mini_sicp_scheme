@@ -25,6 +25,7 @@ module SicpScheme
 
   def self.repl(prompt)
     env = TOPLEVEL_ENV
+    parser = Rubasteme::Parser.new
     evaluator = Evaluator.new
     printer = Printer.new
 
@@ -44,8 +45,7 @@ module SicpScheme
       end
 
       lexer = Rbscmlex::Lexer.new(source, form: :token)
-      parser = Rubasteme.parser(lexer)
-      exp = parser.parse.to_a
+      exp = parser.parse(lexer).to_a
 
       result = evaluator.eval(exp, env)
 

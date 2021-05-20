@@ -2,18 +2,19 @@
 
 module Rubasteme
 
-  def self.parser(lexer)
-    Parser.new(lexer)
+  def self.parser
+    Parser.new
   end
 
   class Parser
 
-    def initialize(lexer)
-      @lexer = lexer
+    def initialize
+      @lexer = nil
     end
 
-    def parse
-      return [] if @lexer.nil?
+    def parse(lexer)
+      return [] if lexer.nil?
+      @lexer = lexer
       parse_program
     end
 

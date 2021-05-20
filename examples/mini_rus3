@@ -47,8 +47,24 @@ class Evaluator
       @env.receiver.instance_eval("def #{proc_name}(op1, op2); op1 #{op} op2; end")
     }
     @env.receiver.instance_eval {
+      def list(*objs)
+        objs
+      end
+
+      def append(*lists)
+        if lists.empty?
+          []
+        else
+          lists[0] + append(*lists[1..-1])
+        end
+      end
+
       def display(obj)
         pp obj
+      end
+
+      def zero?(obj)
+        obj == 0
       end
     }
   end
@@ -74,7 +90,7 @@ class Evaluator
   def translate(ast_node)
     case ast_node.type
     when :ast_empty_list
-      ast_node.literal
+      "[]"
     when :ast_boolean
       (ast_node.literal[1] == "f") ? "false" : "true"
     when :ast_identifier
@@ -82,7 +98,13 @@ class Evaluator
     when :ast_string
       ast_node.literal
     when :ast_number
-      ast_node.literal
+      case ast_node.literal
+      when /([^\/]+)\/([^\/]+)/
+        md = Regexp.last_match
+        "Rational(#{md[1]}, #{md[2]})"
+      else
+        ast_node.literal
+      end
     when :ast_procedure_call
       translate_procedure_call(ast_node)
     when :ast_lambda_expression
@@ -162,6 +184,7 @@ class Evaluator
 
 end
 
+parser = Rubasteme::Parser.new
 evaluator = Evaluator.new
 
 require "readline"
@@ -183,8 +206,7 @@ msg = loop {
   end
 
   lexer = Rbscmlex::Lexer.new(source, form: :token)
-  parser = Rubasteme.parser(lexer)
-  ast_program = parser.parse
+  ast_program = parser.parse(lexer)
 
   result = evaluator.eval(ast_program)
 
