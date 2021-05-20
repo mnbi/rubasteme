@@ -8,6 +8,10 @@ module Rubasteme
 
   class Parser
 
+    def self.version
+      "rubasteme.parser :version #{VERSION} :relase #{RELEASE}"
+    end
+
     def initialize
       @lexer = nil
     end

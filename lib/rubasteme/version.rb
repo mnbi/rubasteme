@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 module Rubasteme
-  VERSION = "0.1.1"
+  VERSION = "0.1.2"
   RELEASE = "2021-05-20"
 end
