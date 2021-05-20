@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["mnbi@users.noreply.github.com"]
 
   spec.summary       = "Simple Abstract Syntax Tree for Scheme written in Ruby"
-  spec.description   = "Simple Abstract Syntax Tree for Scheme, which is intended to be a part of a Scheme implementation written in Ruby."
+  spec.description   = "Simple Abstract Syntax Tree and a parser for Scheme, which is intended to be a part of a Scheme implementation written in Ruby."
   spec.homepage      = "https://github.com/mnbi/rubasteme"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.7.0")

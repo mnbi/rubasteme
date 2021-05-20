@@ -10,7 +10,7 @@ module SicpScheme
 
     def version                   # :nodoc:
       ver = "0.1.0"
-      rel = "2021-05-19"
+      rel = "2021-05-20"
       "(SICP-evaluator :version #{ver} :release #{rel})"
     end
 
