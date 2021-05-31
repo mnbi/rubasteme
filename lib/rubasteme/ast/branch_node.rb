@@ -58,6 +58,22 @@ module Rubasteme
       def initialize(_ = nil)
         super(nil)
       end
+
+      def empty?
+        @nodes.empty?
+      end
+
+      def first
+        @nodes[0]
+      end
+
+      def rest
+        @nodes[1..-1]
+      end
+
+      def elements
+        @nodes
+      end
     end
 
     class QuotationNode < ListNode
@@ -91,8 +107,8 @@ module Rubasteme
 
     class LambdaExpressionNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<formals>, <body>, ...]
-        super(1)
+        # @nodes = [<formals>, <body>]
+        super(2)
       end
 
       def formals
@@ -104,13 +120,11 @@ module Rubasteme
       end
 
       def body
-        @nodes[1..-1]
+        @nodes[1]
       end
 
-      def body=(nodes)
-        nodes.each_with_index { |node, i|
-          @nodes[i + 1] = node
-        }
+      def body=(node)
+        @nodes[1] = node
       end
     end
 
@@ -121,6 +135,59 @@ module Rubasteme
       end
 
       def add_identifier(node)
+        @nodes << node
+      end
+    end
+
+    class HoldingSequenceBaseNode < ListNode
+      def initialize(initial_size = 0, sequence_pos = 0, _ = nil)
+        # @nodes = [..., <sequence>, ...]
+        super(initial_size)
+        @sequence_pos = sequence_pos
+      end
+
+      def sequence
+        @nodes[@sequence_pos]
+      end
+
+      def sequence=(node)
+        @nodes[@sequence_pos] = node
+      end
+    end
+
+    class BodyNode < HoldingSequenceBaseNode
+      def initialize(_ = nil)
+        # @nodes = [<definitions>, <sequence>]
+        super(2, 1, _)
+      end
+
+      def definitions
+        @nodes[0]
+      end
+
+      def definitions=(node)
+        @nodes[0] = node
+      end
+    end
+
+    class InternalDefinitionsNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<definition 1>, <definition 2>, ... ]
+        super(nil)
+      end
+
+      def add_definition(node)
+        @nodes << node
+      end
+    end
+
+    class SequenceNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<expression 1>, <expression 2>, ... ]
+        super(nil)
+      end
+
+      def add_expression(node)
         @nodes << node
       end
     end
@@ -236,10 +303,12 @@ module Rubasteme
       end
     end
 
-    class CondClauseNode < ListNode
-      # @nodes = [<test>, <sequence>]
+    class CondClauseNode < HoldingSequenceBaseNode
       def initialize(_ = nil)
-        super(nil)
+        # type 1: @nodes = [<test>, <sequence>]
+        # type 2: @nodes = [<test>]
+        #   - <sequence> is empty
+        super(2, 1, _)
       end
 
       def test
@@ -249,13 +318,53 @@ module Rubasteme
       def test=(node)
         @nodes[0] = node
       end
+    end
 
-      def sequence
-        @nodes[1..-1]
+    class RecipientClauseBaseNode < ListNode
+      def initialize(initial_size = 0, recipient_pos = 0, _ = nil)
+        # @nodes = [<recipient>]
+        # <recipient> -> <expression>
+        super(initial_size)
+        @recipient_pos = recipient_pos
       end
 
-      def add_expression(node)
-        @nodes << node
+      def recipient
+        @nodes[@recipient_pos]
+      end
+
+      def recipient=(node)
+        @nodes[@recipient_pos] = node
+      end
+    end
+
+    class CondRecipientClauseNode < RecipientClauseBaseNode
+      def initialize(_ = nil)
+        # <cond clause> -> ( <test> => <recipient> )
+        # @nodes = [<test>, <recipient>]
+        super(2, 1, _)
+      end
+
+      def test
+        @nodes[0]
+      end
+
+      def test=(node)
+        @nodes[0] = node
+      end
+    end
+
+    class ElseClauseNode < HoldingSequenceBaseNode
+      def initialize(_ = nil)
+        # @nodes = [<sequence>]
+        super(1, 0, _)
+      end
+    end
+
+    class ElseRecipientClauseNode < RecipientClauseBaseNode
+      def initialize(_ = nil)
+        # ( else => <recipient> )
+        # @nodes = [<recipient>]
+        super(1, 0)
       end
     end
 
@@ -273,9 +382,10 @@ module Rubasteme
       end
     end
 
-    class TestAndSequenceNode < ListNode
+    class TestAndSequenceBaseNode < HoldingSequenceBaseNode
       def initialize(_ = nil)
-        super(1)
+        # @nodes = [<test>, <sequence>]
+        super(2, 1, _)
       end
 
       def test
@@ -285,26 +395,18 @@ module Rubasteme
       def test=(node)
         @nodes[0] = node
       end
-
-      def sequence
-        @nodes[1..-1]
-      end
-
-      def add_sequence(node)
-        @nodes << node
-      end
     end
 
-    class WhenNode < TestAndSequenceNode
+    class WhenNode < TestAndSequenceBaseNode
     end
 
-    class UnlessNode < TestAndSequenceNode
+    class UnlessNode < TestAndSequenceBaseNode
     end
 
     class LetNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<bindings>, <body>, ...] or
-        #          [<identifier>, <bindings>, <body>, ...]
+        # @nodes = [<bindings>, <body>] or
+        #          [<identifier>, <bindings>, <body>]
         super(1)
       end
 
@@ -329,14 +431,12 @@ module Rubasteme
       end
 
       def body
-        named_let? ? @nodes[2..-1] : @nodes[1..-1]
+        named_let? ? @nodes[2] : @nodes[1]
       end
 
-      def body=(nodes)
+      def body=(node)
         start_pos = named_let? ? 2 : 1
-        nodes.each_with_index { |node, i|
-          @nodes[start_pos + i] = node
-        }
+        @nodes[start_pos] = node
       end
 
       private
@@ -348,8 +448,8 @@ module Rubasteme
 
     class LetBaseNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<bindings>, <body>, ...]
-        super(1)
+        # @nodes = [<bindings>, <body>]
+        super(2)
       end
 
       def bindings
@@ -361,13 +461,11 @@ module Rubasteme
       end
 
       def body
-        @nodes[1..-1]
+        @nodes[1]
       end
 
-      def body=(nodes)
-        nodes.each_with_index { |node, i|
-          @nodes[1 + i] = node
-        }
+      def body=(node)
+        @nodes[1] = node
       end
     end
 
@@ -413,9 +511,10 @@ module Rubasteme
       end
     end
 
-    class BeginNode < ListNode
+    class BeginNode < HoldingSequenceBaseNode
       def initialize(_ = nil)
-        super(nil)
+        # @nodes = [<sequnece>]
+        super(1, 0, _)
       end
     end
 

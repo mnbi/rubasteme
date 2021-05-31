@@ -43,6 +43,9 @@ module SicpScheme
       when *EV_IF
         eval_if(exp, env)
       when *EV_LAMBDA
+        internal_definitions(exp).each { |d|
+          eval_definition(d, env)
+        }
         make_procedure(lambda_parameters(exp),
                        lambda_body(exp),
                        env)
@@ -199,8 +202,9 @@ module SicpScheme
     end
 
     def begin_actions(exp)
-      # exp = [:ast_begin, [:ast_*_1], [:ast_*_2], ... ]
-      exp[1..-1]
+      # exp = [:ast_begin, [:ast_sequence]]
+      # sequence = [:ast_sequence, [:ast_*_1], [:ast_*_2], ...]
+      exp[1][1..-1]
     end
 
     def eval_sequence(exps, env)
@@ -241,15 +245,24 @@ module SicpScheme
       exp[2]
     end
 
+    def internal_definitions(exp)
+      # exp = [:ast_lambda_expression, [:ast_formals], [:ast_body]]
+      # body = [:ast_body, [:ast_internal_definitions], [:ast_sequence]]
+      # internal_definitions = [:ast_intern_definitions, [:ast_definition], ...]
+      exp[2][1][1..-1]
+    end
+
     def lambda_parameters(exp)
-      # exp = [:ast_lambda_expression, [:ast_formals], [:ast_*_1] ...]
+      # exp = [:ast_lambda_expression, [:ast_formals], [:ast_body]]
       formals = exp[1][1..-1]
       formals.map{|node| identifier(node)}
     end
 
     def lambda_body(exp)
-      # exp = [:ast_lambda_expression, [:ast_formals], [:ast_*_1] ...]
-      exp[2..-1]
+      # exp = [:ast_lambda_expression, [:ast_formals], [:ast_body]]
+      # body = [:ast_body, [:ast_internal_definitions], [:ast_sequence]]
+      # sequence = [:ast_sequence, [:ast_*_1], [:ast_*_2], ...]
+      exp[2][2][1..-1]
     end
 
     def make_procedure(parameters, body, env)
