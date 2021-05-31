@@ -155,7 +155,7 @@ class Evaluator
 
   def translate_lambda_expression(ast_node)
     formals = ast_node.formals.map{|e| translate(e)}.join(",")
-    body = ast_node.body.map{|e| translate(e)}.join("; ")
+    body = ast_node.body.sequence.map{|e| translate(e)}.join("; ")
     "lambda{|#{formals}|#{body}}"
   end
 
@@ -172,10 +172,15 @@ class Evaluator
   def translate_identifier_definition(ast_node)
     name = translate(ast_node.identifier)
     if ast_node.expression.type == :ast_lambda_expression
+      src = ""
       node = ast_node.expression
       formals = node.formals.map{|e| translate(e)}.join(", ")
-      body = node.body.map{|e| translate(e)}.join("; ")
-      "def #{name}(#{formals}); #{body}; end"
+      unless node.body.definitions.empty?
+        src += node.body.definitions.map{|e| translate(e)}.join("; ")
+        src += "; "
+      end
+      body = node.body.sequence.map{|e| translate(e)}.join("; ")
+      src + "def #{name}(#{formals}); #{body}; end"
     else
       value = translate(ast_node.expression)
       "#{name} = #{value}"

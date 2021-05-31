@@ -1,6 +1,14 @@
 ## [Unreleased]
 - (nothing to record here)
 
+## [0.1.4] - 2021-05-31
+### Added
+- Add a new node to represent sequence. (#3)
+- Incorporate missing methods to ListNode from rbsiev project.
+
+### Fixed
+- Fix #2: typo in the version string.
+
 ## [0.1.3] - 2021-05-20
 ### Fixed
 - Change a method name of AST::CondNode.

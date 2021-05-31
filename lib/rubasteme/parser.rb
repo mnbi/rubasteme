@@ -9,7 +9,7 @@ module Rubasteme
   class Parser
 
     def self.version
-      "rubasteme.parser :version #{VERSION} :relase #{RELEASE}"
+      "(rubasteme.parser :version #{VERSION} :release #{RELEASE})"
     end
 
     def initialize
@@ -187,7 +187,7 @@ module Rubasteme
 
     def parse_lambda_expression
       @lexer.skip_token         # skip :lambda
-      lambda_node = make_lambda_expression_node(parse_formals, read_body)
+      lambda_node = make_lambda_expression_node(parse_formals, parse_body)
       skip_rparen
       lambda_node
     end
@@ -219,13 +219,31 @@ module Rubasteme
       formals_node
     end
 
-    def read_body
-      body = []
+    def parse_body
+      body = AST.instantiate(:ast_body, nil)
+
+      definitions = AST.instantiate(:ast_internal_definitions, nil)
+      body.definitions = definitions
+
+      # read definitions
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen # the end of lambda exp.
-        body << parse_expression
+        break unless is_definition?
+        body.definitions.add_definition(parse_expression)
       }
+
+      body.sequence = parse_sequence
       body
+    end
+
+    def parse_sequence
+      seq_node = AST.instantiate(:ast_sequence, nil)
+      Kernel.loop {
+        break if @lexer.peek_token.type == :rparen # the end of parent list
+        exp = parse_expression
+        seq_node.add_expression(exp)
+      }
+      seq_node
     end
 
     def parse_conditional
@@ -261,6 +279,22 @@ module Rubasteme
 
     def parse_macro_block
       not_implemented_yet("MACRO block")
+    end
+
+    DEFINITION_IDENTIFIERS = [
+      "define",
+      "define-syntax",
+      "define-values",
+      "define-record-type",
+    ]
+
+    def is_definition?
+      if @lexer.peek_token.type == :lparen
+        type, literal = *@lexer.peek_token(1)
+        type == :identifier and DEFINITION_IDENTIFIERS.include?(literal)
+      else
+        false
+      end
     end
 
     def parse_definition
@@ -302,7 +336,7 @@ module Rubasteme
         }
         skip_rparen
 
-        lambda_node = make_lambda_expression_node(def_formals_node, read_body)
+        lambda_node = make_lambda_expression_node(def_formals_node, parse_body)
         skip_rparen
 
         define_node.expression = lambda_node
@@ -352,18 +386,50 @@ module Rubasteme
 
     def parse_cond_clause
       skip_lparen
-      clause_node = AST.instantiate(:ast_cond_clause, nil)
       # type 1: ( <test> )
-      # type 2: ( <test> => <expression> )
-      # type 3: ( <test> <sequence> )
+      # type 2: ( <test> <sequence> )
+      # type 3: ( <test> => <recipient> )
       # type 4: ( else <sequence> )
-      clause_node.test = parse_test
-      Kernel.loop {
-        break if @lexer.peek_token.type == :rparen
-        clause_node.add_expression(parse_expression)
-      }
+      if identifier_name?(@lexer.peek_token, "else")
+        # type 4
+        parse_else_clause
+      else
+        clause_node = nil
+        test_node = parse_test
+        if identifier_name?(@lexer.peek_token, "=>")
+          # type 3
+          @lexer.skip_token     # skip "=>"
+          clause_node = AST.instantiate(:ast_cond_recipient_clause, nil)
+          clause_node.recipient = parse_recipient
+        else
+          # type 1 and 2
+          clause_node = AST.instantiate(:ast_cond_clause, nil)
+          clause_node.sequence = parse_sequence
+        end
+        skip_rparen
+        clause_node.test = test_node
+        clause_node
+      end
+    end
+
+    def parse_else_clause
+      @lexer.skip_token         # skip "else"
+      else_clause_node = AST.instantiate(:ast_else_clause, nil)
+      else_clause_node.sequence = parse_sequence
       skip_rparen
-      clause_node
+      else_clause_node
+    end
+
+    def parse_else_recipient_clause
+      @lexer.skip_token         # skip "else"
+      @lexer.skip_token         # skip "=>"
+      else_recipient_clause_node = AST.instantiate(:ast_else_recipient_clause, nil)
+      else_recipient_clause_node = parse_recipient
+      else_recipient_clause_node
+    end
+
+    def parse_recipient
+      parse_expression
     end
 
     def parse_case
@@ -401,10 +467,7 @@ module Rubasteme
       ast_type = "ast_#{type}".intern
       node = AST.instantiate(ast_type, nil)
       node.test = parse_test
-      Kernel.loop {
-        break if @lexer.peek_token.type == :rparen
-        node << parse_expression
-      }
+      node.sequence = parse_sequence
       skip_rparen
       node
     end
@@ -415,7 +478,7 @@ module Rubasteme
         let_node.identifier = parse_identifier
       end
       let_node.bindings = parse_bindings
-      let_node.body = read_body
+      let_node.body = parse_body
       skip_rparen
       let_node
     end
@@ -456,7 +519,7 @@ module Rubasteme
       ast_type = "ast_#{type}".intern
       node = AST.instantiate(ast_type, nil)
       node.bindings = parse_bindings
-      node.body = read_body
+      node.body = parse_body
       skip_rparen
       node
     end
@@ -471,10 +534,7 @@ module Rubasteme
 
     def parse_begin
       begin_node = AST.instantiate(:ast_begin, nil)
-      Kernel.loop {
-        break if @lexer.peek_token.type == :rparen
-        begin_node << parse_expression
-      }
+      begin_node.sequence = parse_sequence
       skip_rparen
       begin_node
     end
@@ -581,7 +641,7 @@ module Rubasteme
       when :dot
         :ast_dot
       else
-        :ast_identifier
+        :ast_illegal
       end
     end
 
@@ -592,6 +652,10 @@ module Rubasteme
       else
         :ast_list
       end
+    end
+
+    def identifier_name?(token, name)
+      token.type == :identifier && token.literal == name
     end
 
     SCM_CHAR_TO_RB_MAP = {
