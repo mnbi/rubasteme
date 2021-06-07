@@ -5,7 +5,7 @@ module Rubasteme
 
   # :stopdoc:
   EMSG = {
-    scheme_sytanx_error: "syntax error: got=%s",
+    scheme_syntax_error: "syntax error: %s",
     unexpected_token_type: "unexpected token type: got=%s, expected=%s",
     missing_right_parenthesis: "missing right parenthesis",
     unsupported_feature: "unsupported feature: %s",
@@ -15,8 +15,8 @@ module Rubasteme
 
   # Indicates a syntax error as Scheme program.
   class SchemeSyntaxErrorError < Error
-    def initialize(literal)
-      super(EMSG[:scheme_syntax_error] % literal)
+    def initialize(msg)
+      super(EMSG[:scheme_syntax_error] % msg)
     end
   end
 

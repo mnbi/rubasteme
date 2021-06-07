@@ -8,6 +8,25 @@ class RubastemeParserTest < Minitest::Test
     @parser = Rubasteme.parser
   end
 
+  # issue #5
+  def test_it_raise_error_if_internal_definition_is_at_wrong_position
+    source = "(define (foo x) (+ x 1) (define y 4) (* x y))"
+    assert_raises(Rubasteme::SchemeSyntaxErrorError) {
+     _ = parse(source)
+    }
+  end
+
+  def test_it_can_handle_internal_definition
+    source = "(define (foo x) (define (hoge y) (+ y 1)) (hoge x))"
+    ast = parse(source)
+    node = ast[0]
+    assert_equal :ast_identifier_definition, node.type
+    assert_equal :ast_internal_definitions, node.expression.body.definitions.type
+    refute node.expression.body.definitions.empty?
+  end
+
+  # end of issue #5
+
   def test_it_can_get_instance_of_parser
     parser = Rubasteme.parser
     refute_nil parser

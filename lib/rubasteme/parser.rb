@@ -71,7 +71,7 @@ module Rubasteme
       when :lparen
         parse_list_expression
       else
-        raise SchemeSyntaxError, @lexer.peek_token.literal
+        raise SchemeSyntaxErrorError, "%s" % @lexer.peek_token.literal
       end
     end
 
@@ -240,6 +240,9 @@ module Rubasteme
       seq_node = AST.instantiate(:ast_sequence, nil)
       Kernel.loop {
         break if @lexer.peek_token.type == :rparen # the end of parent list
+        if is_definition?
+          raise SchemeSyntaxErrorError, "wrong position of internal definition"
+        end
         exp = parse_expression
         seq_node.add_expression(exp)
       }
@@ -308,7 +311,7 @@ module Rubasteme
       when "define-record-type"
         parse_define_record_type
       else
-        raise SchemeSyntaxErrorError, @lexer.peek_token.literal
+        raise SchemeSyntaxErrorError, "not definition got=%s" % @lexer.peek_token.literal
       end
     end
 
@@ -341,7 +344,7 @@ module Rubasteme
 
         define_node.expression = lambda_node
       else
-        raise SchemeSyntaxErrorError, @lexer.peek_token.literal
+        raise SchemeSyntaxErrorError, "got=%s" % @lexer.peek_token.literal
       end
 
       define_node

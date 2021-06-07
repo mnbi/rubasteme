@@ -1,5 +1,6 @@
 ## [Unreleased]
-- (nothing to record here)
+- Fix #5: incorrect parsing with internal definition at wrong
+  position.
 
 ## [0.1.4] - 2021-05-31
 ### Added
