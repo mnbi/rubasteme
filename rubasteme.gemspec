@@ -27,5 +27,5 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rbscmlex", ">= 0.1.3"
+  spec.add_dependency "rbscmlex", ">= 0.1.4"
 end
