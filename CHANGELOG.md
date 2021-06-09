@@ -1,6 +1,11 @@
 ## [Unreleased]
 - (nothing to record here)
 
+## [0.1.6] - 2021-06-09
+### Fixed:
+- Fix #8: cannot generate a procedure call node if operator is a
+  lambda expression.
+
 ## [0.1.5] - 2021-06-09
 ### Added
 - Add a new node to represent `case` expression and its parsing.

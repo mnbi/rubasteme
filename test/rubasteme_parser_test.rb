@@ -8,6 +8,16 @@ class RubastemeParserTest < Minitest::Test
     @parser = Rubasteme.parser
   end
 
+  # issue #8
+  def test_it_can_generate_proc_call_node_even_if_operator_is_lambda_exp
+    source = "((lambda (n) (+ n 1)) 3)"
+    ast = parse(source)
+    node = ast[0]
+    assert_equal :ast_procedure_call, node.type
+  end
+
+  # end of issue #8
+
   # issue #5
   def test_it_raise_error_if_internal_definition_is_at_wrong_position
     source = "(define (foo x) (+ x 1) (define y 4) (* x y))"

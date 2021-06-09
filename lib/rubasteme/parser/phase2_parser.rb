@@ -61,9 +61,11 @@ module Rubasteme
             node = to_derived_expression(list)
           end
           node || to_procedure_call(list)
+        elsif list[0].instance_of?(Array)
+          to_procedure_call(list)
         else
-          # TODO: it it correct?
-          list
+          raise SchemeSyntaxErrorError,
+                "invalid application; got=%s" % list.to_a.to_s
         end
       end
 
