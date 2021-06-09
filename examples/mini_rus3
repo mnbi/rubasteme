@@ -189,7 +189,7 @@ class Evaluator
 
 end
 
-parser = Rubasteme::Parser.new
+parser = Rubasteme.parser
 evaluator = Evaluator.new
 
 require "readline"

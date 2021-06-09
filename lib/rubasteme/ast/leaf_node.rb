@@ -32,6 +32,10 @@ module Rubasteme
       def initialize(literal)
         super
       end
+
+      def identifier
+        literal
+      end
     end
 
     class CharacterNode < LeafNode

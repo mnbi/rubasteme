@@ -38,62 +38,6 @@ class RubastemeParserTest < Minitest::Test
     assert_equal :ast_program, ast.type
   end
 
-  def test_it_can_parse_boolean
-    tcs = ["#f", "#false", "#t", "#true"]
-    assert_simple_expression_type(tcs, Rubasteme::AST::BooleanNode, :ast_boolean)
-  end
-
-  def test_it_can_parse_identifier
-    tcs = ["foo", "hoge", "if", "define", "cond", "else"]
-    assert_simple_expression_type(tcs, Rubasteme::AST::IdentifierNode, :ast_identifier)
-  end
-
-  def test_it_can_parse_character
-    tcs = ['#\a', '#\あ', '#\newline', '#\space']
-    assert_simple_expression_type(tcs, Rubasteme::AST::CharacterNode, :ast_character)
-  end
-
-  def test_it_can_parse_string
-    tcs = ['"foo"', '"hoge"', '"if"', '"define"', '"cond"', '"else"']
-    assert_simple_expression_type(tcs, Rubasteme::AST::StringNode, :ast_string)
-  end
-
-  def test_it_can_parse_number
-    tcs = ["123", "-1", "+23", "456.7890123", "1/2", "333/4444",
-           "5+6i", "7.0-8.9i", "-0+1i", "-2-3i"]
-    assert_simple_expression_type(tcs, Rubasteme::AST::NumberNode, :ast_number)
-  end
-
-  def test_it_can_parse_dot
-    tcs = ["."]
-    assert_simple_expression_type(tcs, Rubasteme::AST::DotNode, :ast_dot)
-  end
-
-  def test_it_cap_parse_operator
-    tcs = ["+", "-", "*", "/", "%", "<", ">", "<=", ">=", ]
-    assert_simple_expression_type(tcs, Rubasteme::AST::IdentifierNode, :ast_identifier)
-  end
-
-  def test_it_can_parse_vector
-    tcs = ["#()", "#(1)", "#(2 3)", "#(3 #(4 5))",]
-    tcs.each { |src, expected|
-      ast = parse(src)
-      node = ast[0]
-      assert_kind_of Rubasteme::AST::VectorNode, node
-      assert_equal :ast_vector, node.type
-    }
-  end
-
-  def test_it_can_parse_quoted_datum
-    tcs = ["\'1", "\'foo", "\'(1 2)",]
-    tcs.each { |src|
-      ast = parse(src)
-      node = ast[0]
-      assert_kind_of Rubasteme::AST::QuotationNode, node
-      assert_equal :ast_quotation, node.type
-    }
-  end
-
   def test_it_can_parse_procedure_call
     tcs = [
       "(foo)",

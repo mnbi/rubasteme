@@ -55,8 +55,8 @@ module Rubasteme
     end
 
     class ListNode < BranchNode
-      def initialize(_ = nil)
-        super(nil)
+      def initialize(initial_size = 0, _ = nil)
+        super(initial_size)
       end
 
       def empty?
@@ -78,14 +78,14 @@ module Rubasteme
 
     class QuotationNode < ListNode
       def initialize(_ = nil)
-        super(nil)
+        super(0, nil)
       end
     end
 
     class ProcedureCallNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<operator>, <operand>*]
-        super(1)
+        super(1, _)
       end
 
       def operator
@@ -108,7 +108,7 @@ module Rubasteme
     class LambdaExpressionNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<formals>, <body>]
-        super(2)
+        super(2, _)
       end
 
       def formals
@@ -131,7 +131,7 @@ module Rubasteme
     class FormalsNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<identifier 1>, <identifier 2>, ... ]
-        super(nil)
+        super(0, nil)
       end
 
       def add_identifier(node)
@@ -142,7 +142,7 @@ module Rubasteme
     class HoldingSequenceBaseNode < ListNode
       def initialize(initial_size = 0, sequence_pos = 0, _ = nil)
         # @nodes = [..., <sequence>, ...]
-        super(initial_size)
+        super(initial_size, _)
         @sequence_pos = sequence_pos
       end
 
@@ -173,7 +173,7 @@ module Rubasteme
     class InternalDefinitionsNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<definition 1>, <definition 2>, ... ]
-        super(nil)
+        super(0, nil)
       end
 
       def add_definition(node)
@@ -184,7 +184,7 @@ module Rubasteme
     class SequenceNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<expression 1>, <expression 2>, ... ]
-        super(nil)
+        super(0, _)
       end
 
       def add_expression(node)
@@ -196,7 +196,7 @@ module Rubasteme
       def initialize(_ = nil)
         # @nodes = [<test>, <consequent>] or
         #          [<test>, <consequent>, <alternate>]
-        super(1)
+        super(2, _)
       end
 
       def test
@@ -231,7 +231,7 @@ module Rubasteme
     class AssignmentNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<identifier>, <expression>]
-        super(2)
+        super(2, _)
       end
 
       def identifier
@@ -255,7 +255,7 @@ module Rubasteme
       def initialize(_ = nil)
         # @nodes = [<identifier>, <expression>]
         #   <expression> might be a lambda expression.
-        super(2)
+        super(2, _)
       end
 
       def identifier
@@ -291,7 +291,7 @@ module Rubasteme
 
     class CondNode < ListNode
       def initialize(_ = nil)
-        super(nil)
+        super(0, _)
       end
 
       def cond_clauses
@@ -324,7 +324,7 @@ module Rubasteme
       def initialize(initial_size = 0, recipient_pos = 0, _ = nil)
         # @nodes = [<recipient>]
         # <recipient> -> <expression>
-        super(initial_size)
+        super(initial_size, _)
         @recipient_pos = recipient_pos
       end
 
@@ -360,25 +360,86 @@ module Rubasteme
       end
     end
 
+    class CaseNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<expression>, <case caluse>, ... <else clause>]
+        super(1, _)
+      end
+
+      def expression
+        @nodes[0]
+      end
+
+      def expression=(node)
+        @nodes[0] = node
+      end
+
+      def case_clauses
+        @nodes[1..-1]
+      end
+
+      def add_clause(node)
+        @nodes << node
+      end
+    end
+
+    class CaseClauseNode < HoldingSequenceBaseNode
+      def initialize(_ = nil)
+        # @nodes = [<data>, <sequence>]
+        super(2, 1, _)
+      end
+
+      def data
+        @nodes[0]
+      end
+
+      def data=(node)
+        @nodes[0] = node
+      end
+    end
+
+    class DataNode < ListNode
+      def initialize(_ = nil)
+        # @nodes = [<datum>, ...]
+        super(0, _)
+      end
+    end
+
+    class CaseRecipientClauseNode < RecipientClauseBaseNode
+      def initialize(_ = nil)
+        # ( ( <datum>* ) => <recipient> )
+        # @nodes = [<data>, <recipient>]
+        super(2, 1, _)
+      end
+
+      def data
+        @nodes[0]
+      end
+
+      def data=(node)
+        @nodes[0] = node
+      end
+    end
+
     class ElseRecipientClauseNode < RecipientClauseBaseNode
       def initialize(_ = nil)
         # ( else => <recipient> )
         # @nodes = [<recipient>]
-        super(1, 0)
+        super(1, 0, _)
       end
     end
 
     class AndNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<test>, ...]
-        super(nil)
+        super(0, _)
       end
     end
 
     class OrNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<test>, ...]
-        super(nil)
+        super(0, _)
       end
     end
 
@@ -407,7 +468,7 @@ module Rubasteme
       def initialize(_ = nil)
         # @nodes = [<bindings>, <body>] or
         #          [<identifier>, <bindings>, <body>]
-        super(1)
+        super(1, _)
       end
 
       def identifier
@@ -449,7 +510,7 @@ module Rubasteme
     class LetBaseNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<bindings>, <body>]
-        super(2)
+        super(2, _)
       end
 
       def bindings
@@ -481,7 +542,7 @@ module Rubasteme
     class BindingsNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<bind spec 1>, <bind spec 2> , ...]
-        super(nil)
+        super(0, _)
       end
 
       def add_bind_spec(node)
@@ -491,7 +552,7 @@ module Rubasteme
 
     class BindSpecNode < ListNode
       def initialize(_ = nil)
-        super(2)
+        super(2, _)
       end
 
       def identifier
@@ -521,7 +582,7 @@ module Rubasteme
     class DoNode < ListNode
       def initialize(_ = nil)
         # @nodes = [<iteration bindings>, <test and do result>, <command>, ...]
-        super(2)
+        super(2, _)
       end
 
       def iteration_bindings
@@ -551,7 +612,7 @@ module Rubasteme
 
     class IterationBindingsNode < ListNode
       def initialize(_ = nil)
-        super(nil)
+        super(0, _)
       end
 
       def add_iteration_spec(node)
@@ -559,28 +620,14 @@ module Rubasteme
       end
     end
 
-    class TestAndDoResultNode < ListNode
-      def initialize(_ = nil)
-        super(1)
-      end
-
-      def test
-        @nodes[0]
-      end
-
-      def test=(node)
-        @nodes[0] = node
-      end
-
-      def add_expression(node)
-        @nodes << node
-      end
+    class TestAndDoResultNode < TestAndSequenceBaseNode
     end
 
     class IterationSpecNode < ListNode
       def initialize(_ = nil)
-        # @nodes = [<identifier>, <init>, <step>]
-        super(3)
+        # 1. @nodes = [<identifier>, <init>, <step>]
+        # 2. @nodes = [<identifier>, <init>]
+        super(2, _)
       end
 
       def identifier
