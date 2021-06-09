@@ -85,7 +85,7 @@ module Rubasteme
         if lexer.peek_token(1).type == :rparen
           # an empty list
           lexer.skip_rparen(1)
-          AST.instantiate(:ast_empty_list, nil)
+          AST.instantiate(:ast_empty_list)
         else
           nodes = []
           parse_container(nodes, lexer)
@@ -93,7 +93,7 @@ module Rubasteme
       end
 
       def parse_vector(lexer)
-        vector = AST.instantiate(:ast_vector, nil)
+        vector = AST.instantiate(:ast_vector)
         parse_container(vector, lexer)
       end
 

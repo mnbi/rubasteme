@@ -13,16 +13,24 @@ module Rubasteme
     end
 
     module Utils
+      def ast?(obj)
+        obj.kind_of?(AST::Node)
+      end
+
+      def ast_type?(obj, type)
+        ast?(obj) && obj.type == type
+      end
+
       def not_implemented_yet(feature)
         raise NotImplementedYetError, feature
       end
     end
 
+    require_relative "parser/phase1_parser"
+    require_relative "parser/phase2_parser"
+
     class Parser
       include Utils
-
-      require_relative "parser/phase1_parser"
-      require_relative "parser/phase2_parser"
 
       def self.version
         Rubasteme::Parser.send(:version)
@@ -39,7 +47,7 @@ module Rubasteme
 
       def parse(lexer)
         return [] if lexer.nil?
-        ast_program = AST.instantiate(:ast_program, nil)
+        ast_program = AST.instantiate(:ast_program)
         Kernel.loop{ast_program << @p2.parse(@p1.parse(lexer))}
         ast_program
       end

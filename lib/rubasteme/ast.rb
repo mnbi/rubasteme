@@ -19,8 +19,8 @@ module Rubasteme
       :ast_dot,
       # branch
       :ast_program,
-      :ast_list,
       :ast_vector,
+      :ast_list,
       :ast_quotation,
       :ast_procedure_call,
       :ast_lambda_expression,
@@ -33,9 +33,12 @@ module Rubasteme
       :ast_identifier_definition,
       :ast_cond,
       :ast_cond_clause,
-      :ast_else_clause,
       :ast_cond_recipient_clause,
+      :ast_else_clause,
       :ast_case,
+      :ast_case_clause,
+      :ast_data,
+      :ast_case_recipient_clause,
       :ast_else_recipient_clause,
       :ast_and,
       :ast_or,
@@ -56,7 +59,7 @@ module Rubasteme
       :ast_illegal,
     ]
 
-    def self.instantiate(ast_node_type, literal)
+    def self.instantiate(ast_node_type, literal = nil)
       type_name = Utils.camel_case(ast_node_type.to_s.delete_prefix("ast_"))
       klass = AST.const_get("#{type_name}Node")
 
