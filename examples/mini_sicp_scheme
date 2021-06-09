@@ -25,7 +25,7 @@ module SicpScheme
 
   def self.repl(prompt)
     env = TOPLEVEL_ENV
-    parser = Rubasteme::Parser.new
+    parser = Rubasteme.parser
     evaluator = Evaluator.new
     printer = Printer.new
 

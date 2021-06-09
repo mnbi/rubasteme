@@ -559,22 +559,7 @@ module Rubasteme
       end
     end
 
-    class TestAndDoResultNode < ListNode
-      def initialize(_ = nil)
-        super(1)
-      end
-
-      def test
-        @nodes[0]
-      end
-
-      def test=(node)
-        @nodes[0] = node
-      end
-
-      def add_expression(node)
-        @nodes << node
-      end
+    class TestAndDoResultNode < TestAndSequenceBaseNode
     end
 
     class IterationSpecNode < ListNode
