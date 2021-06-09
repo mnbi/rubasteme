@@ -77,7 +77,7 @@ module Rubasteme
 
       def to_procedure_call(list)
         proc_call = AST.instantiate(:ast_procedure_call)
-        proc_call.operator = list[0]
+        proc_call.operator = parse(list[0])
         list[1..-1].each { |node|
           proc_call.add_operand(parse(node))
         }

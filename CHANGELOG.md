@@ -1,6 +1,10 @@
 ## [Unreleased]
 - (nothing to record here)
 
+## [0.1.7] - 2021-06-09
+### Fixed:
+- Fix: the fix in 0.1.6 for #8 is incomplete.
+
 ## [0.1.6] - 2021-06-09
 ### Fixed:
 - Fix #8: cannot generate a procedure call node if operator is a

@@ -14,6 +14,8 @@ class RubastemeParserTest < Minitest::Test
     ast = parse(source)
     node = ast[0]
     assert_equal :ast_procedure_call, node.type
+    operator = node[0]
+    assert_equal :ast_lambda_expression, operator.type
   end
 
   # end of issue #8
