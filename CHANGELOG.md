@@ -1,4 +1,14 @@
 ## [Unreleased]
+- (nothing to record here)
+
+## [0.1.5] - 2021-06-09
+### Added
+- Add a new node to represent `case` expression and its parsing.
+
+### Changed
+- Refactor parser to parse in 2 phases.
+
+### Fixed
 - Fix #5: incorrect parsing with internal definition at wrong
   position.
 
